@@ -1,21 +1,38 @@
-var needle = require('needle')
-  , shots  = 0
-  , begin  = Date.now();
+var SerialPort = require('serialport').SerialPort
+  , needle     = require('needle')
+  , serialPort = new SerialPort('/dev/tty.usbserial-A900cfGf', {
+      baudrate: 9600
+    });
 
-setInterval(function( ){
-  console.log('// * ---- FIRE ' + shots + '! ---- * \\\\');
-  fire(getRandomInt(0,10000));
-},500);
+var msgFrag   = ''
+  , msgLength = 0;
 
-function getRandomInt(min, max) {
-  return Math.floor(Math.random() * (max - min + 1) + min);
+var records = 0
+  , begin   = Date.now();
+
+serialPort.on('open', function () {
+  console.log('serial port open');
+  serialPort.on('data', constructMessages);
+});
+
+function constructMessages (inbound) {
+  var len = inbound.length;
+  if (len + msgLength === 13) {
+    var fullMsg = msgFrag + inbound;
+    fire(JSON.parse(fullMsg.slice(0,11)));
+    msgFrag = '';
+    msgLength = 0;
+    return;
+  }
+  else {
+    msgFrag = inbound;
+    msgLength += len;
+  }
 }
 
-function fire (int) {
-  needle.post( 'http://localhost:8888/level'
-             , { resistance : int }
-             , function(err, res, body) {
-                 console.log( '\n    Fired ' + shots++ + ' at ' + ( Date.now() - begin ) + 'ms.' +
-                              '\n\n// * ----------------- * \\\\\n');
-               });
+function fire (msg) {
+  needle.post( 'http://localhost:8888/level', msg, function(err, res, body) {
+   console.log( '\n Recorded ' + records++ + ' at ' + ( Date.now() - begin ) + 'ms: ' + msg.avg +
+                '\n\n// * ----------------- * \\\\\n');
+ });
 }

@@ -6,7 +6,9 @@ exports.create = function (params, res) {
 
   console.log('creation');
   pg.connect(conString, function(err, client, done) {
-    var queryString = 'INSERT INTO resistances (value, time) VALUES (\'' + escape(params.resistance) + '\',\'' + escape(params.time) + '\') RETURNING *;';
+    if (err) { return console.error(err); }
+    console.log(params.avg);
+    var queryString = 'INSERT INTO resistances (value, time) VALUES (\'' + escape(params.avg) + '\',\'' + escape(params.time) + '\') RETURNING *;';
     console.log(queryString);
     var query = client.query( queryString );
 

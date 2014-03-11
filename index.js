@@ -18,9 +18,10 @@ app.get('/*', function(req,res){
 });
 
 app.post('/level', function(req,res){
+  console.log(req.body);
   // console.log('SOCKET: emitting resistance of ' + req.body.resistance);
-  var params = { resistance : req.body.resistance
-               , time       : Date.now( ) };
+  var params = { avg  : req.body.avg
+               , time : Date.now( ) };
   database.create(params, res.send);
   io.sockets.emit('resistance', params );
   res.send(200);
